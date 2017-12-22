@@ -11,16 +11,21 @@ The purpose of this class is to process the game file and create the "game board
 and the HashMap storage of rooms, items, and mobs.
 */
 
+import javafx.application.Application; // import for application
+import javafx.stage.*; // imports for javafx stage
+import javafx.scene.*; // imports for javafx scene
+import javafx.scene.paint.*; // imports for color
+import javafx.scene.canvas.*; // imports canvas
+import javafx.scene.layout.*;
+import javafx.scene.input.*; // import for text fields
+import javafx.event.*; // import for event handlers
+import javafx.scene.control.*; // import for buttons
+import javafx.scene.text.*; // import for Text on canvas
+import javafx.scene.image.*;
 import java.util.*;
 import java.io.*;
 
-public class Game{
-
-  private static Player player; // variable for player Object
-  private static HashMap<String,Room> rooms;  // maps room names to Room Object
-  private static HashMap<String,Item> items;  // maps item names to Item Object
-  private static HashMap<String,Mob> mobs;    // maps mob names to Mob Object
-  private static Room stash;  // declares stash room pointer
+public class Game extends Application{
 
   public static void main(String[] args){
     player = new Player();
@@ -31,10 +36,29 @@ public class Game{
     // initializes the rooms, items, mobs, stash, and player Objects/Data
 
     fillDungeon(args[0]);
+    launch(args);
+  }
+
+  private static Player player; // variable for player Object
+  private static HashMap<String,Room> rooms;  // maps room names to Room Object
+  private static HashMap<String,Item> items;  // maps item names to Item Object
+  private static HashMap<String,Mob> mobs;    // maps mob names to Mob Object
+  private static Room stash;  // declares stash room pointer
+
+  public void start(Stage stage){
+    stage.setTitle("Dungeon Crawler II: Electric Boogaloo");
+
+    BorderPane rootPane = new BorderPane();
+    Canvas canvas = new Canvas(1000, 800);
+    GraphicsContext gc = canvas.getGraphicsContext2D();
+
+    rootPane.setRight(canvas);
+    stage.setScene(new Scene(rootPane));
 
     // creats REPL object and starts it on a new thread
     CommandREPL repl = new CommandREPL(player, rooms, items, mobs, stash);
     repl.start();
+    stage.show();
   }
 
   /*

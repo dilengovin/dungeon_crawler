@@ -61,58 +61,14 @@ public class CommandREPL extends Thread{
       *  prints out the details of an item or mob the user wants to examine
       */
       } else if (command[0].toLowerCase().equals("examine")){
-
-        // examine for mob
-        if (command[1].toLowerCase().equals("mob")){
-          String mobName = line.split(command[1])[1].trim();
-
-          if (mobs.containsKey(mobName.toLowerCase())){
-            if (currRoom.getMob() != null){
-              if (currRoom.getMob().getName().toLowerCase().equals(mobName.toLowerCase())){
-                mobs.get(mobName.toLowerCase()).examine();
-              } else {
-                System.out.println("Invalid command.");
-              }
-            } else {
-              System.out.println("Invalid command.");
-            }
-          } else {
-            System.out.println("Invalid command.");
-          }
-
-        // examine for items
-        } else if (command[1].toLowerCase().equals("item")){
-          String itemName = line.split(command[1])[1].trim();
-
-          if (items.containsKey(itemName.toLowerCase())){
-            if (currRoom.getItem(itemName.toLowerCase()) != null){
-              // exmaine the item
-              items.get(itemName.toLowerCase()).examine();
-            } else {
-              System.out.println("Invalid command.");
-            }
-          } else {
-            System.out.println("Invalid command.");
-          }
-
-        // catch for not putting item or mob
-        } else {
-          System.out.println("Invalid command.");
-        }
+        examine(command[1], line);
 
       /* move command
       *  moves from current room to the connecting room in the user specified
       *  direction. If no connection or bad direction returns invalid.
       */
       } else if (command[0].toLowerCase().equals("move")){
-
-        if (currRoom.getConnection(command[1].toUpperCase()) == null){
-          System.out.println("Invalid direction.");
-        } else {
-          // sets current move to connected room
-          currRoom = currRoom.getConnection(command[1].toUpperCase());
-          player.addMove();
-        }
+        moveRoom(command[1]);
 
       /* pickup command
       *  Pickup an item that is currently in the room. If the item doesn't exist
@@ -120,23 +76,7 @@ public class CommandREPL extends Thread{
       *  be no mob in the room for an item to be picked up.
       */
       } else if (command[0].toLowerCase().equals("pickup")){
-        if (currRoom.getMob() != null){
-          System.out.println("You must destroy the mob first.");
-        } else {
-          String itemName = line.split(command[0])[1].trim().toLowerCase();
-
-          if (items.containsKey(itemName)){
-            if (currRoom.getItem(itemName) != null){
-              if (player.addItem(itemName, items.get(itemName)) == 0){
-                currRoom.removeItem(itemName); // removes item from name
-              }
-            } else {
-              System.out.println("Invalid item.");
-            }
-          } else {
-            System.out.println("Invalid item.");
-          }
-        }
+        pickupItem(command[0], line);
 
       /* drop command
       *  Command takes an item from inventory and drops it on the floor, The
@@ -145,13 +85,8 @@ public class CommandREPL extends Thread{
       */
       } else if (command[0].toLowerCase().equals("drop")){
         String itemName = line.split(command[0])[1].trim().toLowerCase();
+        dropItem(itemName);
 
-        if (player.getItems().containsKey(itemName)){
-          player.removeItem(itemName);
-          currRoom.addItem(items.get(itemName));
-        } else {
-          System.out.println("Invalid item.");
-        }
 
       /* stash commands
       *  stores an item in the stash room. Cannot be accessed anymore. Stashed
@@ -159,47 +94,15 @@ public class CommandREPL extends Thread{
       */
       } else if (command[0].toLowerCase().equals("stash")){
         String itemName = line.split(command[0])[1].trim().toLowerCase();
+        stashItem(itemName);
 
-        if (currRoom == stash){
-          if (player.getItems().containsKey(itemName)){
-            player.stash(items.get(itemName));
-            player.removeItem(itemName);
-          } else {
-            System.out.println("Invalid item.");
-          }
-        } else {
-          System.out.println("Invalid command.");
-        }
 
       /* fight command
       *  Fight commands takes a current weapon argument to fight the current mob
       *  in the room.
       */
       } else if (command[0].toLowerCase().equals("fight")){
-        if (currRoom.getMob() != null){
-          Mob mob = currRoom.getMob();
-          String itemName = line.split(command[0])[1].trim().toLowerCase();
-
-          if (player.getItems().containsKey(itemName)){
-            Item item = items.get(itemName);
-            if (item instanceof Weapon){
-              if (player.getPower() + item.getPower() > mob.getPower()){
-                currRoom.setMob(null); // removes mob
-                System.out.println("You destroyed " + mob.getName() + " with power level " +
-                                   mob.getPower() + "!");
-              } else {
-                System.out.println(mob.getName() + " defeated you! Try a different weapon.");
-              }
-              player.addMove();
-            } else {
-              System.out.println("Invalid weapon.");
-            }
-          } else {
-            System.out.println("Invalid weapon.");
-          }
-        } else {
-          System.out.println("No mob found.");
-        }
+        fight(command[0], line);
 
       /* inventory command
       *  Prints out an alphabetically sorted examine list of the items in the
@@ -257,6 +160,131 @@ public class CommandREPL extends Thread{
         System.out.println("Invalid choice.");
         pClass = "";
       }
+    }
+  }
+
+  public void examine(String identifier, String line){
+    // examine for mob
+    if (identifier.toLowerCase().equals("mob")){
+      String mobName = line.split(identifier)[1].trim();
+      examineMob(mobName);
+
+    // examine for items
+  } else if (identifier.toLowerCase().equals("item")){
+      String itemName = line.split(identifier)[1].trim();
+      examineItem(itemName);
+
+    // catch for not putting item or mob
+    } else {
+      System.out.println("Invalid command.");
+    }
+  }
+
+  public void examineMob(String mobName){
+    if (mobs.containsKey(mobName.toLowerCase())){
+      if (currRoom.getMob() != null){
+        if (currRoom.getMob().getName().toLowerCase().equals(mobName.toLowerCase())){
+          mobs.get(mobName.toLowerCase()).examine();
+        } else {
+          System.out.println("Invalid command.");
+        }
+      } else {
+        System.out.println("Invalid command.");
+      }
+    } else {
+      System.out.println("Invalid command.");
+    }
+  }
+
+  public void examineItem(String itemName){
+    if (items.containsKey(itemName.toLowerCase())){
+      if (currRoom.getItem(itemName.toLowerCase()) != null){
+        // exmaine the item
+        items.get(itemName.toLowerCase()).examine();
+      } else {
+        System.out.println("Invalid command.");
+      }
+    } else {
+      System.out.println("Invalid command.");
+    }
+  }
+
+  public void fight(String command, String line){
+    if (currRoom.getMob() != null){
+      Mob mob = currRoom.getMob();
+      String itemName = line.split(command)[1].trim().toLowerCase();
+
+      if (player.getItems().containsKey(itemName)){
+        Item item = items.get(itemName);
+        if (item instanceof Weapon){
+          if (player.getPower() + item.getPower() > mob.getPower()){
+            currRoom.setMob(null); // removes mob
+            System.out.println("You destroyed " + mob.getName() + " with power level " +
+                               mob.getPower() + "!");
+          } else {
+            System.out.println(mob.getName() + " defeated you! Try a different weapon.");
+          }
+          player.addMove();
+        } else {
+          System.out.println("Invalid weapon.");
+        }
+      } else {
+        System.out.println("Invalid weapon.");
+      }
+    } else {
+      System.out.println("No mob found.");
+    }
+  }
+
+  public void moveRoom(String command){
+    if (currRoom.getConnection(command.toUpperCase()) == null){
+      System.out.println("Invalid direction.");
+    } else {
+      // sets current move to connected room
+      currRoom = currRoom.getConnection(command.toUpperCase());
+      player.addMove();
+    }
+  }
+
+  public void pickupItem(String command, String line){
+    if (currRoom.getMob() != null){
+      System.out.println("You must destroy the mob first.");
+    } else {
+      String itemName = line.split(command)[1].trim().toLowerCase();
+
+      if (items.containsKey(itemName)){
+        if (currRoom.getItem(itemName) != null){
+          if (player.addItem(itemName, items.get(itemName)) == 0){
+            currRoom.removeItem(itemName); // removes item from name
+          }
+        } else {
+          System.out.println("Invalid item.");
+        }
+      } else {
+        System.out.println("Invalid item.");
+      }
+    }
+  }
+
+  public void dropItem(String itemName){
+    if (player.getItems().containsKey(itemName)){
+      player.removeItem(itemName);
+      currRoom.addItem(items.get(itemName));
+    } else {
+      System.out.println("Invalid item.");
+    }
+  }
+
+  public void stashItem(String itemName){
+    if (currRoom == stash){
+      if (player.getItems().containsKey(itemName)){
+        player.stash(items.get(itemName));
+        player.removeItem(itemName);
+      } else {
+        System.out.println("Invalid item.");
+      }
+    } else {
+      System.out.println("Invalid command.");
     }
   }
 }
